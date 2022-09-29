@@ -36,5 +36,18 @@ up:
 down:
 	@docker-compose down
 
+restart:
+	rm -rf db/migrations/*.js
+	rm -rf src/model/generated
+	npx squid-substrate-typegen typegen.json
+	docker-compose down
+	sleep 1
+	docker-compose up -d
+	sleep 2
+	npx squid-typeorm-codegen
+	npm run build
+	npx squid-typeorm-migration generate || true
+	npx squid-typeorm-migration apply
+	node -r dotenv/config lib/processor.js
 
 .PHONY: build serve process migrate codegen typegen up down

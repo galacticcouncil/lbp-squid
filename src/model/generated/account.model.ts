@@ -8,7 +8,7 @@ export class Account {
   }
 
   /**
-   * Account address
+   * Account pubkey
    */
   @PrimaryColumn_()
   id!: string
