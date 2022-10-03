@@ -61,6 +61,7 @@ type HistoricalPoolPriceData @entity {
   assetABalance: BigInt!
   assetBBalance: BigInt!
   pool: Pool!
-  relayChainBlockHeight: Int
+  relayChainBlockHeight: Int!
+  paraChainBlockHeight: Int!
   block: BlockHeader
 }

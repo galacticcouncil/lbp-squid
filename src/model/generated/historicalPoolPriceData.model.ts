@@ -29,8 +29,11 @@ export class HistoricalPoolPriceData {
   @ManyToOne_(() => Pool, {nullable: true})
   pool!: Pool
 
-  @Column_("int4", {nullable: true})
-  relayChainBlockHeight!: number | undefined | null
+  @Column_("int4", {nullable: false})
+  relayChainBlockHeight!: number
+
+  @Column_("int4", {nullable: false})
+  paraChainBlockHeight!: number
 
   @Index_()
   @ManyToOne_(() => BlockHeader, {nullable: true})

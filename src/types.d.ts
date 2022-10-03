@@ -1,6 +1,3 @@
-type Item = BatchProcessorItem<typeof processor>
-type Ctx = BatchContext<Store, Item>
-
 interface TransferEvent {
   id: string
   assetId: number
@@ -42,4 +39,5 @@ interface PoolPriceData {
   assetBBalance: bigint
   pool: Pool
   relayChainBlockHeight: number
+  paraChainBlockHeight: number
 }

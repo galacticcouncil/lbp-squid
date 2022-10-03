@@ -5,10 +5,17 @@ import * as hexUtil from '@subsquid/util-internal-hex'
 
 import {
   BatchBlock,
+  BatchContext,
+  BatchProcessorItem,
   SubstrateBatchProcessor,
 } from '@subsquid/substrate-processor'
-import { TypeormDatabase } from '@subsquid/typeorm-store'
-import { In } from 'typeorm'
+import {
+  Entity,
+  EntityClass,
+  Store,
+  TypeormDatabase,
+} from '@subsquid/typeorm-store'
+import { In, Like } from 'typeorm'
 import {
   Account,
   Pool,
@@ -86,6 +93,9 @@ const processor = new SubstrateBatchProcessor()
     },
   })
   .addCall('ParachainSystem.set_validation_data', {})
+
+type Item = BatchProcessorItem<typeof processor>
+type Ctx = BatchContext<Store, Item>
 
 processor.run(new TypeormDatabase(), async (ctx) => {
   let transfersData = getTransfers(ctx)
@@ -239,8 +249,9 @@ async function getPoolPriceData(
   pools: Pool[],
 ): Promise<PoolPriceData[]> {
   let poolPrices: Promise<PoolPriceData | null>[] = []
-
+  ctx
   for (let block of ctx.blocks) {
+    if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
     for (let item of block.items) {
       if (item.name == 'ParachainSystem.set_validation_data') {
         let c = new ParachainSystemSetValidationDataCall(ctx, item.call).asV72
@@ -267,6 +278,7 @@ async function getPoolPriceData(
                     assetBBalance: assetBBalance,
                     pool: p,
                     relayChainBlockHeight: relayChainBlockNumber,
+                    paraChainBlockHeight: parachainBlockNumber,
                   })
                 })
               }),
@@ -318,6 +330,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
 async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
   let pools: PoolCreatedEvent[] = []
   for (let block of ctx.blocks) {
+    if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
     for (let item of block.items) {
       if (item.name == 'XYK.PoolCreated') {
         const e = new XykPoolCreatedEvent(ctx, item.event).asV72
@@ -361,6 +374,7 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
           e.data.assets[1],
           hexUtil.toHex(e.pool),
         )
+
         pools.push({
           id: hexUtil.toHex(e.pool),
           assetAId: e.data.assets[0],
