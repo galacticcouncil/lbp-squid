@@ -50,7 +50,8 @@ type Pool @entity {
   assetABalance: BigInt!
   assetBBalance: BigInt!
   poolType: PoolType!
-  createdAt: Int!
+  createdAtParaBlock: Int!
+  createdAt: DateTime!
   historicalBalances: [HistoricalPoolPriceData!]! @derivedFrom(field: "pool")
 }
 

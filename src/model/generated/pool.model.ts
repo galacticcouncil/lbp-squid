@@ -33,7 +33,10 @@ export class Pool {
   poolType!: PoolType
 
   @Column_("int4", {nullable: false})
-  createdAt!: number
+  createdAtParaBlock!: number
+
+  @Column_("timestamp with time zone", {nullable: false})
+  createdAt!: Date
 
   @OneToMany_(() => HistoricalPoolPriceData, e => e.pool)
   historicalBalances!: HistoricalPoolPriceData[]

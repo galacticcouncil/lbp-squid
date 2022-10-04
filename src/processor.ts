@@ -9,13 +9,8 @@ import {
   BatchProcessorItem,
   SubstrateBatchProcessor,
 } from '@subsquid/substrate-processor'
-import {
-  Entity,
-  EntityClass,
-  Store,
-  TypeormDatabase,
-} from '@subsquid/typeorm-store'
-import { In, Like } from 'typeorm'
+import { Store, TypeormDatabase } from '@subsquid/typeorm-store'
+import { In } from 'typeorm'
 import {
   Account,
   Pool,
@@ -158,6 +153,7 @@ processor.run(new TypeormDatabase(), async (ctx) => {
       assetBBalance,
       poolType,
       createdAt,
+      createdAtParaBlock,
       lbpPoolData,
     } = p
 
@@ -183,6 +179,7 @@ processor.run(new TypeormDatabase(), async (ctx) => {
         assetABalance,
         assetBBalance,
         createdAt,
+        createdAtParaBlock,
         poolType,
       }),
     )
@@ -262,7 +259,7 @@ async function getPoolPriceData(
           pools.map(
             async (p) =>
               new Promise<PoolPriceData | null>((resolve) => {
-                if (p.createdAt > parachainBlockNumber) {
+                if (p.createdAtParaBlock > parachainBlockNumber) {
                   resolve(null)
                   return
                 }
@@ -355,7 +352,8 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
           assetBId: e.assetB,
           assetABalance,
           assetBBalance,
-          createdAt: block.header.height,
+          createdAt: new Date(block.header.timestamp),
+          createdAtParaBlock: block.header.height,
           poolType: PoolType.XYK,
         })
       } else if (item.name == 'LBP.PoolCreated') {
@@ -381,7 +379,8 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
           assetBId: e.data.assets[1],
           assetABalance,
           assetBBalance,
-          createdAt: block.header.height,
+          createdAt: new Date(block.header.timestamp),
+          createdAtParaBlock: block.header.height,
           poolType: PoolType.LBP,
           lbpPoolData: {
             owner: hexUtil.toHex(e.data.owner),

@@ -28,7 +28,8 @@ interface PoolCreatedEvent {
   assetABalance: bigint
   assetBBalance: bigint
   poolType: PoolType
-  createdAt: number
+  createdAt: Date
+  createdAtParaBlock: number
   lbpPoolData?: LBPPoolDataUpdate
 }
 
