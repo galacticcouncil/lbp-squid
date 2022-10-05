@@ -248,7 +248,7 @@ async function getPoolPriceData(
   let poolPrices: Promise<PoolPriceData | null>[] = []
   ctx
   for (let block of ctx.blocks) {
-    if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
+    //if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
     for (let item of block.items) {
       if (item.name == 'ParachainSystem.set_validation_data') {
         let c = new ParachainSystemSetValidationDataCall(ctx, item.call).asV72
@@ -327,7 +327,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
 async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
   let pools: PoolCreatedEvent[] = []
   for (let block of ctx.blocks) {
-    if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
+    //if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
     for (let item of block.items) {
       if (item.name == 'XYK.PoolCreated') {
         const e = new XykPoolCreatedEvent(ctx, item.event).asV72
