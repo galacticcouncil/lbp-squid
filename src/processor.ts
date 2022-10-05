@@ -93,8 +93,8 @@ type Item = BatchProcessorItem<typeof processor>
 type Ctx = BatchContext<Store, Item>
 
 processor.run(new TypeormDatabase(), async (ctx) => {
-  let transfersData = getTransfers(ctx)
-  let poolsData = await getPools(ctx)
+  const transfersData = getTransfers(ctx)
+  const poolsData = await getPools(ctx)
   const lbpPoolsUpdates = await getLBPPoolUpdates(ctx)
 
   let accountIds = new Set<string>()
@@ -210,9 +210,16 @@ processor.run(new TypeormDatabase(), async (ctx) => {
     data.endBlockNumber = newData.endBlockNumber
   }
 
+  const poolIds = pools.map((p) => p.id)
+  let poolEntities = await ctx.store
+    .findBy(Pool, { id: In([...poolIds]) })
+    .then((pools) => {
+      return pools.map((p) => p)
+    })
+
   await ctx.store.save(Array.from(accounts.values()))
   await ctx.store.insert(transfers)
-  await ctx.store.insert(pools)
+  await ctx.store.save(pools)
   await ctx.store.insert(Array.from(lbpPoolsData.values()))
   await ctx.store.insert(poolsPriceData)
 })
