@@ -38,7 +38,7 @@ const processor = new SubstrateBatchProcessor()
     // archive: lookupArchive("kusama", {release: "FireSquid"})
 
     // Use archive created by archive/docker-compose.yml
-    archive: 'http://localhost:8888/graphql',
+    archive: 'https://basilisk-devnet-firesquid.play.hydration.cloud/graphql',
     chain: 'wss://rpc.hydration.dev/',
 
     // Use other remote archive

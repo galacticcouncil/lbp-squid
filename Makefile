@@ -1,7 +1,6 @@
 process: migrate
 	@node -r dotenv/config lib/processor.js
 
-
 build:
 	@npm run build
 
@@ -50,4 +49,4 @@ restart:
 	npx squid-typeorm-migration apply
 	node -r dotenv/config lib/processor.js
 
-.PHONY: build serve process migrate codegen typegen up down
+.PHONY: build serve process migrate codegen typegen up down restart
