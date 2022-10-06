@@ -1,48 +1,107 @@
-// import { lookupArchive } from '@subsquid/archive-registry'
-// import * as ss58 from '@subsquid/ss58'
-
 import * as hexUtil from '@subsquid/util-internal-hex'
+import getRepoInfo from 'git-repo-info'
 
 import {
   BatchBlock,
   BatchContext,
   BatchProcessorItem,
-  SubstrateBatchProcessor,
+  SubstrateBatchProcessor
 } from '@subsquid/substrate-processor'
 import { Store, TypeormDatabase } from '@subsquid/typeorm-store'
 import { In } from 'typeorm'
 import {
   Account,
+  HistoricalPoolPriceData,
+  LBPPoolData,
   Pool,
   PoolType,
-  LBPPoolData,
-  Transfer,
-  HistoricalPoolPriceData,
+  Transfer
 } from './model'
+import { ParachainSystemSetValidationDataCall } from './types/calls'
 import {
   BalancesTransferEvent,
   LbpPoolCreatedEvent,
   LbpPoolUpdatedEvent,
   TokensTransferEvent,
-  XykPoolCreatedEvent,
+  XykPoolCreatedEvent
 } from './types/events'
 import { SystemAccountStorage, TokensAccountsStorage } from './types/storage'
-import { ParachainSystemSetValidationDataCall } from './types/calls'
 
 import { isNotNullOrUndefined } from './helpers'
+import yargs from 'yargs'
+
+export enum environment {
+  local = 'local',
+  develop = 'develop',
+  rococo = 'rococo',
+  production = 'production'
+}
+
+export type ENV = {
+  [K in environment]: {
+    archive: string
+    chain: string
+  }
+}
+
+export const DEFAULT_ENV = 'local'
+
+export const argv = yargs()
+  .alias('e', 'env')
+  .describe('e', 'Set environment to run the indexer for')
+  .choices('e', Object.values(environment))
+  .help()
+  .parseSync(process.argv.slice(2))
+
+export const env: ENV = {
+  local: {
+    archive: 'http://localhost:8888/graphql',
+    chain: 'wss://rpc.hydration.dev'
+  },
+  develop: {
+    archive: 'https://basilisk-devnet-firesquid.play.hydration.cloud/graphql',
+    chain: 'wss://rpc.hydration.dev'
+  },
+  rococo: {
+    archive: 'https://basilisk-rococo-firesquid.play.hydration.cloud/graphql',
+    chain: 'wss://rococo-basilisk-rpc.hydration.dev/'
+  },
+  production: {
+    archive: '',
+    chain: ''
+  }
+}
+
+const { branch } = getRepoInfo()
+const isCi = process.env.CI === 'true'
+const a = argv.env
+
+const envChoice = (() => {
+  if (
+    argv.env &&
+    Object.values(environment).includes(argv.env as environment)
+  ) {
+    return environment[argv.env as environment]
+  } else if (
+    isCi &&
+    Object.values(environment).includes(branch as environment)
+  ) {
+    return environment[branch as environment]
+  } else if (
+    process.env.ENV &&
+    Object.values(environment).includes(process.env.ENV as environment)
+  ) {
+    return environment[process.env.ENV as environment]
+  } else return environment[DEFAULT_ENV]
+})()
+
+console.log('CI', isCi)
+console.log('ENV', envChoice)
 
 const processor = new SubstrateBatchProcessor()
   .setBatchSize(500)
   .setDataSource({
-    // Lookup archive by the network name in the Subsquid registry
-    // archive: lookupArchive("kusama", {release: "FireSquid"})
-
-    // Use archive created by archive/docker-compose.yml
-    archive: 'https://basilisk-rococo-firesquid.play.hydration.cloud/graphql',
-    chain: 'wss://rococo-basilisk-rpc.hydration.dev/',
-
-    // Use other remote archive
-    // archive: 'https://basilisk-devnet-firesquid.play.hydration.cloud/',
+    ...env[envChoice]
   })
   .addEvent('Balances.Transfer', {
     data: {
@@ -50,10 +109,10 @@ const processor = new SubstrateBatchProcessor()
         args: true,
         extrinsic: {
           hash: true,
-          fee: true,
-        },
-      },
-    },
+          fee: true
+        }
+      }
+    }
   })
   .addEvent('Tokens.Transfer', {
     data: {
@@ -61,31 +120,31 @@ const processor = new SubstrateBatchProcessor()
         args: true,
         extrinsic: {
           hash: true,
-          fee: true,
-        },
-      },
-    },
+          fee: true
+        }
+      }
+    }
   })
   .addEvent('XYK.PoolCreated', {
     data: {
       event: {
-        args: true,
-      },
-    },
+        args: true
+      }
+    }
   })
   .addEvent('LBP.PoolUpdated', {
     data: {
       event: {
-        args: true,
-      },
-    },
+        args: true
+      }
+    }
   })
   .addEvent('LBP.PoolCreated', {
     data: {
       event: {
-        args: true,
-      },
-    },
+        args: true
+      }
+    }
   })
   .addCall('ParachainSystem.set_validation_data', {})
 
@@ -136,8 +195,8 @@ processor.run(new TypeormDatabase(), async (ctx) => {
         from,
         to,
         amount,
-        fee,
-      }),
+        fee
+      })
     )
   }
 
@@ -154,7 +213,7 @@ processor.run(new TypeormDatabase(), async (ctx) => {
       poolType,
       createdAt,
       createdAtParaBlock,
-      lbpPoolData,
+      lbpPoolData
     } = p
 
     if (lbpPoolData) {
@@ -166,8 +225,8 @@ processor.run(new TypeormDatabase(), async (ctx) => {
           feeCollector: getAccount(accounts, lbpPoolData.feeCollector),
           fee: lbpPoolData.fee,
           initialWeight: lbpPoolData.initialWeight,
-          finalWeight: lbpPoolData.finalWeight,
-        }),
+          finalWeight: lbpPoolData.finalWeight
+        })
       )
     }
     pools.push(
@@ -180,16 +239,14 @@ processor.run(new TypeormDatabase(), async (ctx) => {
         assetBBalance,
         createdAt,
         createdAtParaBlock,
-        poolType,
-      }),
+        poolType
+      })
     )
   }
 
   const poolsPriceData: HistoricalPoolPriceData[] = []
-
-  const lbpPools = await ctx.store.findBy(Pool, { poolType: PoolType.LBP })
-
-  const poolPriceData = await getPoolPriceData(ctx, lbpPools)
+  const allPools = await ctx.store.find(Pool)
+  const poolPriceData = await getPoolPriceData(ctx, allPools)
 
   for (let p of poolPriceData) {
     poolsPriceData.push(new HistoricalPoolPriceData(p))
@@ -210,17 +267,10 @@ processor.run(new TypeormDatabase(), async (ctx) => {
     data.endBlockNumber = newData.endBlockNumber
   }
 
-  const poolIds = pools.map((p) => p.id)
-  let poolEntities = await ctx.store
-    .findBy(Pool, { id: In([...poolIds]) })
-    .then((pools) => {
-      return pools.map((p) => p)
-    })
-
   await ctx.store.save(Array.from(accounts.values()))
   await ctx.store.insert(transfers)
   await ctx.store.save(pools)
-  await ctx.store.insert(Array.from(lbpPoolsData.values()))
+  await ctx.store.save(Array.from(lbpPoolsData.values()))
   await ctx.store.insert(poolsPriceData)
 })
 
@@ -240,7 +290,7 @@ async function getLBPPoolUpdates(ctx: Ctx) {
           initialWeight: data.initialWeight,
           finalWeight: data.finalWeight,
           feeCollector: hexUtil.toHex(data.feeCollector),
-          owner: hexUtil.toHex(data.owner),
+          owner: hexUtil.toHex(data.owner)
         }
       }
     }
@@ -250,12 +300,11 @@ async function getLBPPoolUpdates(ctx: Ctx) {
 
 async function getPoolPriceData(
   ctx: Ctx,
-  pools: Pool[],
+  pools: Pool[]
 ): Promise<PoolPriceData[]> {
   let poolPrices: Promise<PoolPriceData | null>[] = []
   ctx
   for (let block of ctx.blocks) {
-    //if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
     for (let item of block.items) {
       if (item.name == 'ParachainSystem.set_validation_data') {
         let c = new ParachainSystemSetValidationDataCall(ctx, item.call).asV72
@@ -273,7 +322,7 @@ async function getPoolPriceData(
 
                 Promise.all([
                   getAssetBalance(ctx, block, p.assetAId, p.id),
-                  getAssetBalance(ctx, block, p.assetBId, p.id),
+                  getAssetBalance(ctx, block, p.assetBId, p.id)
                 ]).then(([assetABalance, assetBBalance]) => {
                   resolve({
                     id: p.id + '-' + parachainBlockNumber,
@@ -282,11 +331,11 @@ async function getPoolPriceData(
                     assetBBalance: assetBBalance,
                     pool: p,
                     relayChainBlockHeight: relayChainBlockNumber,
-                    paraChainBlockHeight: parachainBlockNumber,
+                    paraChainBlockHeight: parachainBlockNumber
                   })
                 })
-              }),
-          ),
+              })
+          )
         )
       }
     }
@@ -310,7 +359,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
           from: hexUtil.toHex(e.from),
           to: hexUtil.toHex(e.to),
           amount: e.amount,
-          fee: item.event.extrinsic?.fee || 0n,
+          fee: item.event.extrinsic?.fee || 0n
         })
       } else if (item.name == 'Tokens.Transfer') {
         let e = new TokensTransferEvent(ctx, item.event).asV72
@@ -323,7 +372,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
           from: hexUtil.toHex(e.from),
           to: hexUtil.toHex(e.to),
           amount: e.amount,
-          fee: item.event.extrinsic?.fee || 0n,
+          fee: item.event.extrinsic?.fee || 0n
         })
       }
     }
@@ -343,14 +392,14 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
           ctx,
           block,
           e.assetA,
-          hexUtil.toHex(e.pool),
+          hexUtil.toHex(e.pool)
         )
 
         const assetBBalance = await getAssetBalance(
           ctx,
           block,
           e.assetB,
-          hexUtil.toHex(e.pool),
+          hexUtil.toHex(e.pool)
         )
 
         pools.push({
@@ -361,7 +410,7 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
           assetBBalance,
           createdAt: new Date(block.header.timestamp),
           createdAtParaBlock: block.header.height,
-          poolType: PoolType.XYK,
+          poolType: PoolType.XYK
         })
       } else if (item.name == 'LBP.PoolCreated') {
         const e = new LbpPoolCreatedEvent(ctx, item.event).asV72
@@ -370,14 +419,14 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
           ctx,
           block,
           e.data.assets[0],
-          hexUtil.toHex(e.pool),
+          hexUtil.toHex(e.pool)
         )
 
         const assetBBalance = await getAssetBalance(
           ctx,
           block,
           e.data.assets[1],
-          hexUtil.toHex(e.pool),
+          hexUtil.toHex(e.pool)
         )
 
         pools.push({
@@ -394,8 +443,8 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
             feeCollector: hexUtil.toHex(e.data.feeCollector),
             fee: e.data.fee,
             initialWeight: e.data.initialWeight,
-            finalWeight: e.data.finalWeight,
-          },
+            finalWeight: e.data.finalWeight
+          }
         })
       }
     }
@@ -417,7 +466,7 @@ async function getAssetBalance(
   ctx: Ctx,
   block: BatchBlock<Item>,
   assetId: number,
-  account: string,
+  account: string
 ) {
   if (assetId === 0) {
     const storage = new SystemAccountStorage(ctx, block.header)

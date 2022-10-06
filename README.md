@@ -1,7 +1,14 @@
-# Squid template project
+# Basilisk LBP processor
 
-A starter [Squid](https://subsquid.io) project to demonstrate its structure and conventions.
-It accumulates [kusama](https://kusama.network) account transfers and serves them via GraphQL API.
+You can use this processor to process LBP data from Basilisk. It has pre-defined envionments you can run.
+The first rule to match the environment applies in the following order:
+
+1. From the -e or --env command flag
+2. From the ENV environment variable in .env file
+3. From the branch you are running while the CI env flag is set to `true`
+4. Defaults to `local` if none of the above are set
+
+Possible options are `local`, `develop`, `rococo`, `production`
 
 ## Summary
 
