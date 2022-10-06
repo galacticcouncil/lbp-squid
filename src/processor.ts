@@ -74,7 +74,6 @@ export const env: ENV = {
 
 const { branch } = getRepoInfo()
 const isCi = process.env.CI === 'true'
-const a = argv.env
 
 const envChoice = (() => {
   if (
@@ -95,6 +94,7 @@ const envChoice = (() => {
   } else return environment[DEFAULT_ENV]
 })()
 
+console.log('branch', branch)
 console.log('CI', isCi)
 console.log('ENV', envChoice)
 
