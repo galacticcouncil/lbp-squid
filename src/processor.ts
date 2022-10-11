@@ -67,8 +67,8 @@ export const env: ENV = {
     chain: 'wss://rococo-basilisk-rpc.hydration.dev/'
   },
   production: {
-    archive: '',
-    chain: ''
+    archive: 'https://basilisk-firesquid.play.hydration.cloud/graphql',
+    chain: 'wss://rpc.basilisk.cloud'
   }
 }
 
