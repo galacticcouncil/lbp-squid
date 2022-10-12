@@ -173,7 +173,7 @@ processor.run(new TypeormDatabase(), async (ctx) => {
     accountIds.add(lbpPoolsUpdates[p].feeCollector)
   }
 
-  console.log('WOOO', JSON.stringify(accountIds))
+  console.log('WOOO', JSON.stringify(accountIds.entries()))
 
   let accounts = await ctx.store
     .findBy(Account, { id: In([...accountIds]) })
