@@ -173,6 +173,8 @@ processor.run(new TypeormDatabase(), async (ctx) => {
     accountIds.add(lbpPoolsUpdates[p].feeCollector)
   }
 
+  console.log('WOOO', JSON.stringify(accountIds))
+
   let accounts = await ctx.store
     .findBy(Account, { id: In([...accountIds]) })
     .then((accounts) => {
@@ -356,7 +358,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
           from: hexUtil.toHex(from),
           to: hexUtil.toHex(to),
           amount: amount,
-          fee: item.event.extrinsic?.fee || 0n
+          fee: item.event.extrinsic?.fee || 0
         })
       } else if (item.name == 'Tokens.Transfer') {
         let e = new TokensTransferEvent(ctx, item.event)
@@ -380,7 +382,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
           from: hexUtil.toHex(from),
           to: hexUtil.toHex(to),
           amount: amount,
-          fee: item.event.extrinsic?.fee || 0n
+          fee: item.event.extrinsic?.fee || 0
         })
       }
     }
