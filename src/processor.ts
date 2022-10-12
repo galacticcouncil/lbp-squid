@@ -442,7 +442,7 @@ async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
 
         // TODO: Extract production
         const { pool, data } = (() => {
-          if (e.isV16 || e.isV25 || e.isV38 || e.isV55) {
+          if (e.isV16 || e.isV25 || e.isV38) {
             throw new Error('Version < V55 LBP pool not supported')
           } else return { ...e.asV55 }
         })()
