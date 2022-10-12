@@ -173,13 +173,15 @@ processor.run(new TypeormDatabase(), async (ctx) => {
     accountIds.add(lbpPoolsUpdates[p].feeCollector)
   }
 
-  console.log('WOOO', JSON.stringify(accountIds.entries()))
+  //console.log('WOOO', JSON.stringify(accountIds.entries()))
 
-  let accounts = await ctx.store
-    .findBy(Account, { id: In([...accountIds]) })
-    .then((accounts) => {
-      return new Map(accounts.map((a) => [a.id, a]))
-    })
+  let accounts = accountIds
+    ? await ctx.store
+        .findBy(Account, { id: In([...accountIds]) })
+        .then((accounts) => {
+          return new Map(accounts.map((a) => [a.id, a]))
+        })
+    : new Map()
 
   let transfers: Transfer[] = []
 
