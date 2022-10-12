@@ -1,10 +1,10 @@
 import { environment } from '../../processor'
 import { production } from './production'
-import { ParsedPoolUpdate, PoolUpdateEventItem } from './types'
+import { ParsedPoolUpdate } from './types'
 
 export const parseLBPPoolUpdates = (
   ctx: Ctx,
-  item: PoolUpdateEventItem,
+  item: any,
   env: environment
 ): ParsedPoolUpdate => {
   switch (env) {

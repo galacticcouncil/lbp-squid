@@ -1,10 +1,7 @@
 import { LbpPoolUpdatedEvent } from '../../types/types-production/events'
-import { ParsedPoolUpdate, PoolUpdateEventItem } from './types'
+import { ParsedPoolUpdate } from './types'
 
-export const production = (
-  ctx: Ctx,
-  item: PoolUpdateEventItem
-): ParsedPoolUpdate => {
+export const production = (ctx: Ctx, item: any): ParsedPoolUpdate => {
   const event = new LbpPoolUpdatedEvent(ctx, item.event)
   if (event.isV16) {
     throw new Error('Not implemented')
