@@ -279,11 +279,7 @@ async function getLBPPoolUpdates(ctx: Ctx) {
   for (let block of ctx.blocks) {
     for (let item of block.items) {
       if (item.name == 'LBP.PoolUpdated') {
-        const { poolData, poolId } = parseLBPPoolUpdates(
-          ctx,
-          item.event,
-          currentEnv
-        )
+        const { poolData, poolId } = parseLBPPoolUpdates(ctx, item, currentEnv)
         updates[hexUtil.toHex(poolId)] = poolData
       }
     }
