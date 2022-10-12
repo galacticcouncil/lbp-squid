@@ -6,7 +6,7 @@ export const production = (
   item: any
 ): ParsedParachainSystemValidationData => {
   const call = new ParachainSystemSetValidationDataCall(ctx, item.call)
-  if (call.asV16) {
+  if (call.isV16) {
     const c16 = call.asV16
     return {
       relayChainBlockNumber: c16.data.validationData.relayParentNumber
