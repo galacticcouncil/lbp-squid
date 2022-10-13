@@ -262,7 +262,7 @@ processor.run(new TypeormDatabase(), async (ctx) => {
     const data = lbpPoolsData.get(p)
     const newData = lbpPoolsUpdates[p]
 
-    if (!data) return
+    if (!data) continue
 
     data.owner = getAccount(accounts, newData.owner)
     data.feeCollector = getAccount(accounts, newData.feeCollector)
@@ -418,7 +418,6 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
 async function getPools(ctx: Ctx): Promise<PoolCreatedEvent[]> {
   let pools: PoolCreatedEvent[] = []
   for (let block of ctx.blocks) {
-    //if (block.header.height < 127000) continue // TODO TESTNET DEBUG -> REMOVE ME
     for (let item of block.items) {
       if (item.name == 'XYK.PoolCreated') {
         const e = new XykPoolCreatedEvent(ctx, item.event)
