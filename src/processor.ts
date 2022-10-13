@@ -24,6 +24,7 @@ import { parseLBPPoolUpdates } from './transforms/lbpPoolUpdate/index'
 import {
   BalancesTransferEvent,
   LbpPoolCreatedEvent,
+  LbpPoolUpdatedEvent,
   TokensTransferEvent,
   XykPoolCreatedEvent
 } from './types/types-production/events'
@@ -32,6 +33,7 @@ import {
   TokensAccountsStorage
 } from './types/types-production/storage'
 import { parseParachainSystemValidationData } from './transforms/parachainSystemValidationData/index'
+import { ParachainSystemSetValidationDataCall } from './types/types-production/calls'
 
 export enum environment {
   local = 'local',
@@ -283,8 +285,25 @@ async function getLBPPoolUpdates(ctx: Ctx) {
   for (let block of ctx.blocks) {
     for (let item of block.items) {
       if (item.name == 'LBP.PoolUpdated') {
-        const { poolData, poolId } = parseLBPPoolUpdates(ctx, item, currentEnv)
-        updates[hexUtil.toHex(poolId)] = poolData
+        //const { poolData, poolId } = parseLBPPoolUpdates(ctx, item, currentEnv)
+        const e = new LbpPoolUpdatedEvent(ctx, item.event)
+
+        if (e.isV16 || e.isV25 || e.isV38)
+          throw new Error('Unsupported LBP.PoolUpdated event version')
+
+        const data = e.asV55.data
+
+        updates[hexUtil.toHex(e.asV55.pool)] = {
+          startBlockNumber: data.start,
+          endBlockNumber: data.end,
+          repayTarget: data.repayTarget,
+          fee: data.fee,
+          initialWeight: data.initialWeight,
+          finalWeight: data.finalWeight,
+          feeCollector: hexUtil.toHex(data.feeCollector),
+          owner: hexUtil.toHex(data.owner)
+        }
+        // updates[hexUtil.toHex(poolId)] = poolData
       }
     }
   }
@@ -299,11 +318,15 @@ async function getPoolPriceData(
   for (let block of ctx.blocks) {
     for (let item of block.items) {
       if (item.name == 'ParachainSystem.set_validation_data') {
-        const { relayChainBlockNumber } = parseParachainSystemValidationData(
-          ctx,
-          item,
-          currentEnv
-        )
+        // const { relayChainBlockNumber } = parseParachainSystemValidationData(
+        //   ctx,
+        //   item,
+        //   currentEnv
+        // )
+        let c = new ParachainSystemSetValidationDataCall(ctx, item.call)
+        const relayChainBlockNumber = c.isV16
+          ? c.asV16.data.validationData.relayParentNumber
+          : c.asV25.data.validationData.relayParentNumber
         const parachainBlockNumber = block.header.height
 
         poolPrices = poolPrices.concat(
@@ -360,7 +383,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
           from: hexUtil.toHex(from),
           to: hexUtil.toHex(to),
           amount: amount,
-          fee: item.event.extrinsic?.fee || 0
+          fee: item.event.extrinsic?.fee || 0n
         })
       } else if (item.name == 'Tokens.Transfer') {
         let e = new TokensTransferEvent(ctx, item.event)
@@ -384,7 +407,7 @@ function getTransfers(ctx: Ctx): TransferEvent[] {
           from: hexUtil.toHex(from),
           to: hexUtil.toHex(to),
           amount: amount,
-          fee: item.event.extrinsic?.fee || 0
+          fee: item.event.extrinsic?.fee || 0n
         })
       }
     }
