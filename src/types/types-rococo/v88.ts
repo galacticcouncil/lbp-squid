@@ -1,31 +1,51 @@
 import type {Result, Option} from './support'
 
-export type ClassType = ClassType_Marketplace | ClassType_LiquidityMining | ClassType_Redeemable | ClassType_Auction | ClassType_HydraHeads
-
-export interface ClassType_Marketplace {
-    __kind: 'Marketplace'
-}
-
-export interface ClassType_LiquidityMining {
-    __kind: 'LiquidityMining'
-}
-
-export interface ClassType_Redeemable {
-    __kind: 'Redeemable'
-}
-
-export interface ClassType_Auction {
-    __kind: 'Auction'
-}
-
-export interface ClassType_HydraHeads {
-    __kind: 'HydraHeads'
-}
-
 export interface EventRecord {
     phase: Phase
     event: Event
     topics: Uint8Array[]
+}
+
+export interface DepositData {
+    shares: bigint
+    ammPoolId: Uint8Array
+    yieldFarmEntries: YieldFarmEntry[]
+}
+
+export interface GlobalFarmData {
+    id: number
+    owner: Uint8Array
+    updatedAt: number
+    totalSharesZ: bigint
+    accumulatedRpz: bigint
+    rewardCurrency: number
+    pendingRewards: bigint
+    accumulatedPaidRewards: bigint
+    yieldPerPeriod: bigint
+    plannedYieldingPeriods: number
+    blocksPerPeriod: number
+    incentivizedAsset: number
+    maxRewardPerPeriod: bigint
+    minDeposit: bigint
+    liveYieldFarmsCount: number
+    totalYieldFarmsCount: number
+    priceAdjustment: bigint
+    state: FarmState
+}
+
+export interface YieldFarmData {
+    id: number
+    updatedAt: number
+    totalShares: bigint
+    totalValuedShares: bigint
+    accumulatedRpvs: bigint
+    accumulatedRpz: bigint
+    loyaltyCurve: (LoyaltyCurve | undefined)
+    multiplier: bigint
+    state: FarmState
+    entriesCount: bigint
+    leftToDistribute: bigint
+    totalStopped: number
 }
 
 export type Phase = Phase_ApplyExtrinsic | Phase_Finalization | Phase_Initialization
@@ -43,7 +63,7 @@ export interface Phase_Initialization {
     __kind: 'Initialization'
 }
 
-export type Event = Event_System | Event_Balances | Event_Treasury | Event_Utility | Event_Scheduler | Event_Democracy | Event_Elections | Event_Council | Event_TechnicalCommittee | Event_Vesting | Event_Proxy | Event_Tips | Event_CollatorSelection | Event_Session | Event_Preimage | Event_Uniques | Event_Identity | Event_Multisig | Event_ParachainSystem | Event_PolkadotXcm | Event_CumulusXcm | Event_XcmpQueue | Event_DmpQueue | Event_AssetRegistry | Event_XYK | Event_Duster | Event_Exchange | Event_LBP | Event_NFT | Event_MultiTransactionPayment | Event_RelayChainInfo | Event_Marketplace | Event_TransactionPause | Event_Currencies | Event_Tokens | Event_OrmlXcm | Event_XTokens | Event_UnknownTokens
+export type Event = Event_System | Event_Balances | Event_TransactionPayment | Event_Treasury | Event_Utility | Event_Scheduler | Event_Democracy | Event_Elections | Event_Council | Event_TechnicalCommittee | Event_Vesting | Event_Proxy | Event_Tips | Event_CollatorSelection | Event_Session | Event_Preimage | Event_Uniques | Event_Identity | Event_Multisig | Event_ParachainSystem | Event_PolkadotXcm | Event_CumulusXcm | Event_XcmpQueue | Event_DmpQueue | Event_AssetRegistry | Event_XYK | Event_Duster | Event_LBP | Event_NFT | Event_MultiTransactionPayment | Event_RelayChainInfo | Event_Marketplace | Event_TransactionPause | Event_Router | Event_XYKLiquidityMining | Event_XYKWarehouseLM | Event_Currencies | Event_Tokens | Event_OrmlXcm | Event_XTokens | Event_UnknownTokens
 
 export interface Event_System {
     __kind: 'System'
@@ -53,6 +73,11 @@ export interface Event_System {
 export interface Event_Balances {
     __kind: 'Balances'
     value: BalancesEvent
+}
+
+export interface Event_TransactionPayment {
+    __kind: 'TransactionPayment'
+    value: TransactionPaymentEvent
 }
 
 export interface Event_Treasury {
@@ -175,11 +200,6 @@ export interface Event_Duster {
     value: DusterEvent
 }
 
-export interface Event_Exchange {
-    __kind: 'Exchange'
-    value: ExchangeEvent
-}
-
 export interface Event_LBP {
     __kind: 'LBP'
     value: LBPEvent
@@ -210,6 +230,21 @@ export interface Event_TransactionPause {
     value: TransactionPauseEvent
 }
 
+export interface Event_Router {
+    __kind: 'Router'
+    value: RouterEvent
+}
+
+export interface Event_XYKLiquidityMining {
+    __kind: 'XYKLiquidityMining'
+    value: XYKLiquidityMiningEvent
+}
+
+export interface Event_XYKWarehouseLM {
+    __kind: 'XYKWarehouseLM'
+    value: XYKWarehouseLMEvent
+}
+
 export interface Event_Currencies {
     __kind: 'Currencies'
     value: CurrenciesEvent
@@ -233,6 +268,36 @@ export interface Event_XTokens {
 export interface Event_UnknownTokens {
     __kind: 'UnknownTokens'
     value: UnknownTokensEvent
+}
+
+export interface YieldFarmEntry {
+    globalFarmId: number
+    yieldFarmId: number
+    valuedShares: bigint
+    accumulatedRpvs: bigint
+    accumulatedClaimedRewards: bigint
+    enteredAt: number
+    updatedAt: number
+    stoppedAtCreation: number
+}
+
+export type FarmState = FarmState_Active | FarmState_Stopped | FarmState_Terminated
+
+export interface FarmState_Active {
+    __kind: 'Active'
+}
+
+export interface FarmState_Stopped {
+    __kind: 'Stopped'
+}
+
+export interface FarmState_Terminated {
+    __kind: 'Terminated'
+}
+
+export interface LoyaltyCurve {
+    initialRewardPercentage: bigint
+    scaleCoef: number
 }
 
 /**
@@ -291,7 +356,7 @@ export interface SystemEvent_Remarked {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -395,11 +460,30 @@ export interface BalancesEvent_Slashed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type TreasuryEvent = TreasuryEvent_Proposed | TreasuryEvent_Spending | TreasuryEvent_Awarded | TreasuryEvent_Rejected | TreasuryEvent_Burnt | TreasuryEvent_Rollover | TreasuryEvent_Deposit
+export type TransactionPaymentEvent = TransactionPaymentEvent_TransactionFeePaid
+
+/**
+ * A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
+ * has been paid by `who`.
+ */
+export interface TransactionPaymentEvent_TransactionFeePaid {
+    __kind: 'TransactionFeePaid'
+    who: Uint8Array
+    actualFee: bigint
+    tip: bigint
+}
+
+/**
+ * 
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
+			by this pallet.
+			
+ */
+export type TreasuryEvent = TreasuryEvent_Proposed | TreasuryEvent_Spending | TreasuryEvent_Awarded | TreasuryEvent_Rejected | TreasuryEvent_Burnt | TreasuryEvent_Rollover | TreasuryEvent_Deposit | TreasuryEvent_SpendApproved
 
 /**
  * New proposal.
@@ -461,12 +545,22 @@ export interface TreasuryEvent_Deposit {
 }
 
 /**
+ * A new spend proposal has been approved.
+ */
+export interface TreasuryEvent_SpendApproved {
+    __kind: 'SpendApproved'
+    proposalIndex: number
+    amount: bigint
+    beneficiary: Uint8Array
+}
+
+/**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type UtilityEvent = UtilityEvent_BatchInterrupted | UtilityEvent_BatchCompleted | UtilityEvent_ItemCompleted | UtilityEvent_DispatchedAs
+export type UtilityEvent = UtilityEvent_BatchInterrupted | UtilityEvent_BatchCompleted | UtilityEvent_BatchCompletedWithErrors | UtilityEvent_ItemCompleted | UtilityEvent_ItemFailed | UtilityEvent_DispatchedAs
 
 /**
  * Batch of dispatches did not complete fully. Index of first failing dispatch given, as
@@ -486,6 +580,13 @@ export interface UtilityEvent_BatchCompleted {
 }
 
 /**
+ * Batch of dispatches completed but has errors.
+ */
+export interface UtilityEvent_BatchCompletedWithErrors {
+    __kind: 'BatchCompletedWithErrors'
+}
+
+/**
  * A single item within a Batch of dispatches has completed with no error.
  */
 export interface UtilityEvent_ItemCompleted {
@@ -493,11 +594,19 @@ export interface UtilityEvent_ItemCompleted {
 }
 
 /**
+ * A single item within a Batch of dispatches has completed with error.
+ */
+export interface UtilityEvent_ItemFailed {
+    __kind: 'ItemFailed'
+    error: DispatchError
+}
+
+/**
  * A call was dispatched.
  */
 export interface UtilityEvent_DispatchedAs {
     __kind: 'DispatchedAs'
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -530,7 +639,7 @@ export interface SchedulerEvent_Dispatched {
     __kind: 'Dispatched'
     task: [number, number]
     id: (Uint8Array | undefined)
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -545,11 +654,11 @@ export interface SchedulerEvent_CallLookupFailed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type DemocracyEvent = DemocracyEvent_Proposed | DemocracyEvent_Tabled | DemocracyEvent_ExternalTabled | DemocracyEvent_Started | DemocracyEvent_Passed | DemocracyEvent_NotPassed | DemocracyEvent_Cancelled | DemocracyEvent_Executed | DemocracyEvent_Delegated | DemocracyEvent_Undelegated | DemocracyEvent_Vetoed | DemocracyEvent_PreimageNoted | DemocracyEvent_PreimageUsed | DemocracyEvent_PreimageInvalid | DemocracyEvent_PreimageMissing | DemocracyEvent_PreimageReaped | DemocracyEvent_Blacklisted | DemocracyEvent_Voted | DemocracyEvent_Seconded
+export type DemocracyEvent = DemocracyEvent_Proposed | DemocracyEvent_Tabled | DemocracyEvent_ExternalTabled | DemocracyEvent_Started | DemocracyEvent_Passed | DemocracyEvent_NotPassed | DemocracyEvent_Cancelled | DemocracyEvent_Executed | DemocracyEvent_Delegated | DemocracyEvent_Undelegated | DemocracyEvent_Vetoed | DemocracyEvent_PreimageNoted | DemocracyEvent_PreimageUsed | DemocracyEvent_PreimageInvalid | DemocracyEvent_PreimageMissing | DemocracyEvent_PreimageReaped | DemocracyEvent_Blacklisted | DemocracyEvent_Voted | DemocracyEvent_Seconded | DemocracyEvent_ProposalCanceled
 
 /**
  * A motion has been proposed by a public account.
@@ -616,7 +725,7 @@ export interface DemocracyEvent_Cancelled {
 export interface DemocracyEvent_Executed {
     __kind: 'Executed'
     refIndex: number
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -723,8 +832,16 @@ export interface DemocracyEvent_Seconded {
 }
 
 /**
+ * A proposal got canceled.
+ */
+export interface DemocracyEvent_ProposalCanceled {
+    __kind: 'ProposalCanceled'
+    propIndex: number
+}
+
+/**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -797,7 +914,7 @@ export interface ElectionsEvent_SeatHolderSlashed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -850,7 +967,7 @@ export interface CouncilEvent_Disapproved {
 export interface CouncilEvent_Executed {
     __kind: 'Executed'
     proposalHash: Uint8Array
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -859,7 +976,7 @@ export interface CouncilEvent_Executed {
 export interface CouncilEvent_MemberExecuted {
     __kind: 'MemberExecuted'
     proposalHash: Uint8Array
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -874,7 +991,7 @@ export interface CouncilEvent_Closed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -927,7 +1044,7 @@ export interface TechnicalCommitteeEvent_Disapproved {
 export interface TechnicalCommitteeEvent_Executed {
     __kind: 'Executed'
     proposalHash: Uint8Array
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -936,7 +1053,7 @@ export interface TechnicalCommitteeEvent_Executed {
 export interface TechnicalCommitteeEvent_MemberExecuted {
     __kind: 'MemberExecuted'
     proposalHash: Uint8Array
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -951,7 +1068,7 @@ export interface TechnicalCommitteeEvent_Closed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -986,18 +1103,18 @@ export interface VestingEvent_VestingSchedulesUpdated {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type ProxyEvent = ProxyEvent_ProxyExecuted | ProxyEvent_AnonymousCreated | ProxyEvent_Announced | ProxyEvent_ProxyAdded
+export type ProxyEvent = ProxyEvent_ProxyExecuted | ProxyEvent_AnonymousCreated | ProxyEvent_Announced | ProxyEvent_ProxyAdded | ProxyEvent_ProxyRemoved
 
 /**
  * A proxy was executed correctly, with the given.
  */
 export interface ProxyEvent_ProxyExecuted {
     __kind: 'ProxyExecuted'
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -1034,8 +1151,19 @@ export interface ProxyEvent_ProxyAdded {
 }
 
 /**
+ * A proxy was removed.
+ */
+export interface ProxyEvent_ProxyRemoved {
+    __kind: 'ProxyRemoved'
+    delegator: Uint8Array
+    delegatee: Uint8Array
+    proxyType: ProxyType
+    delay: number
+}
+
+/**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1087,7 +1215,7 @@ export interface TipsEvent_TipSlashed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1095,32 +1223,33 @@ export type CollatorSelectionEvent = CollatorSelectionEvent_NewInvulnerables | C
 
 export interface CollatorSelectionEvent_NewInvulnerables {
     __kind: 'NewInvulnerables'
-    value: Uint8Array[]
+    invulnerables: Uint8Array[]
 }
 
 export interface CollatorSelectionEvent_NewDesiredCandidates {
     __kind: 'NewDesiredCandidates'
-    value: number
+    desiredCandidates: number
 }
 
 export interface CollatorSelectionEvent_NewCandidacyBond {
     __kind: 'NewCandidacyBond'
-    value: bigint
+    bondAmount: bigint
 }
 
 export interface CollatorSelectionEvent_CandidateAdded {
     __kind: 'CandidateAdded'
-    value: [Uint8Array, bigint]
+    accountId: Uint8Array
+    deposit: bigint
 }
 
 export interface CollatorSelectionEvent_CandidateRemoved {
     __kind: 'CandidateRemoved'
-    value: Uint8Array
+    accountId: Uint8Array
 }
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1137,7 +1266,7 @@ export interface SessionEvent_NewSession {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1169,102 +1298,102 @@ export interface PreimageEvent_Cleared {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type UniquesEvent = UniquesEvent_Created | UniquesEvent_ForceCreated | UniquesEvent_Destroyed | UniquesEvent_Issued | UniquesEvent_Transferred | UniquesEvent_Burned | UniquesEvent_Frozen | UniquesEvent_Thawed | UniquesEvent_ClassFrozen | UniquesEvent_ClassThawed | UniquesEvent_OwnerChanged | UniquesEvent_TeamChanged | UniquesEvent_ApprovedTransfer | UniquesEvent_ApprovalCancelled | UniquesEvent_AssetStatusChanged | UniquesEvent_ClassMetadataSet | UniquesEvent_ClassMetadataCleared | UniquesEvent_MetadataSet | UniquesEvent_MetadataCleared | UniquesEvent_Redeposited | UniquesEvent_AttributeSet | UniquesEvent_AttributeCleared
+export type UniquesEvent = UniquesEvent_Created | UniquesEvent_ForceCreated | UniquesEvent_Destroyed | UniquesEvent_Issued | UniquesEvent_Transferred | UniquesEvent_Burned | UniquesEvent_Frozen | UniquesEvent_Thawed | UniquesEvent_CollectionFrozen | UniquesEvent_CollectionThawed | UniquesEvent_OwnerChanged | UniquesEvent_TeamChanged | UniquesEvent_ApprovedTransfer | UniquesEvent_ApprovalCancelled | UniquesEvent_ItemStatusChanged | UniquesEvent_CollectionMetadataSet | UniquesEvent_CollectionMetadataCleared | UniquesEvent_MetadataSet | UniquesEvent_MetadataCleared | UniquesEvent_Redeposited | UniquesEvent_AttributeSet | UniquesEvent_AttributeCleared | UniquesEvent_OwnershipAcceptanceChanged | UniquesEvent_CollectionMaxSupplySet | UniquesEvent_ItemPriceSet | UniquesEvent_ItemPriceRemoved | UniquesEvent_ItemBought
 
 /**
- * An asset class was created.
+ * A `collection` was created.
  */
 export interface UniquesEvent_Created {
     __kind: 'Created'
-    class: bigint
+    collection: bigint
     creator: Uint8Array
     owner: Uint8Array
 }
 
 /**
- * An asset class was force-created.
+ * A `collection` was force-created.
  */
 export interface UniquesEvent_ForceCreated {
     __kind: 'ForceCreated'
-    class: bigint
+    collection: bigint
     owner: Uint8Array
 }
 
 /**
- * An asset `class` was destroyed.
+ * A `collection` was destroyed.
  */
 export interface UniquesEvent_Destroyed {
     __kind: 'Destroyed'
-    class: bigint
+    collection: bigint
 }
 
 /**
- * An asset `instance` was issued.
+ * An `item` was issued.
  */
 export interface UniquesEvent_Issued {
     __kind: 'Issued'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     owner: Uint8Array
 }
 
 /**
- * An asset `instance` was transferred.
+ * An `item` was transferred.
  */
 export interface UniquesEvent_Transferred {
     __kind: 'Transferred'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     from: Uint8Array
     to: Uint8Array
 }
 
 /**
- * An asset `instance` was destroyed.
+ * An `item` was destroyed.
  */
 export interface UniquesEvent_Burned {
     __kind: 'Burned'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     owner: Uint8Array
 }
 
 /**
- * Some asset `instance` was frozen.
+ * Some `item` was frozen.
  */
 export interface UniquesEvent_Frozen {
     __kind: 'Frozen'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
 }
 
 /**
- * Some asset `instance` was thawed.
+ * Some `item` was thawed.
  */
 export interface UniquesEvent_Thawed {
     __kind: 'Thawed'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
 }
 
 /**
- * Some asset `class` was frozen.
+ * Some `collection` was frozen.
  */
-export interface UniquesEvent_ClassFrozen {
-    __kind: 'ClassFrozen'
-    class: bigint
+export interface UniquesEvent_CollectionFrozen {
+    __kind: 'CollectionFrozen'
+    collection: bigint
 }
 
 /**
- * Some asset `class` was thawed.
+ * Some `collection` was thawed.
  */
-export interface UniquesEvent_ClassThawed {
-    __kind: 'ClassThawed'
-    class: bigint
+export interface UniquesEvent_CollectionThawed {
+    __kind: 'CollectionThawed'
+    collection: bigint
 }
 
 /**
@@ -1272,7 +1401,7 @@ export interface UniquesEvent_ClassThawed {
  */
 export interface UniquesEvent_OwnerChanged {
     __kind: 'OwnerChanged'
-    class: bigint
+    collection: bigint
     newOwner: Uint8Array
 }
 
@@ -1281,115 +1410,165 @@ export interface UniquesEvent_OwnerChanged {
  */
 export interface UniquesEvent_TeamChanged {
     __kind: 'TeamChanged'
-    class: bigint
+    collection: bigint
     issuer: Uint8Array
     admin: Uint8Array
     freezer: Uint8Array
 }
 
 /**
- * An `instance` of an asset `class` has been approved by the `owner` for transfer by a
- * `delegate`.
+ * An `item` of a `collection` has been approved by the `owner` for transfer by
+ * a `delegate`.
  */
 export interface UniquesEvent_ApprovedTransfer {
     __kind: 'ApprovedTransfer'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     owner: Uint8Array
     delegate: Uint8Array
 }
 
 /**
- * An approval for a `delegate` account to transfer the `instance` of an asset `class` was
- * cancelled by its `owner`.
+ * An approval for a `delegate` account to transfer the `item` of an item
+ * `collection` was cancelled by its `owner`.
  */
 export interface UniquesEvent_ApprovalCancelled {
     __kind: 'ApprovalCancelled'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     owner: Uint8Array
     delegate: Uint8Array
 }
 
 /**
- * An asset `class` has had its attributes changed by the `Force` origin.
+ * A `collection` has had its attributes changed by the `Force` origin.
  */
-export interface UniquesEvent_AssetStatusChanged {
-    __kind: 'AssetStatusChanged'
-    class: bigint
+export interface UniquesEvent_ItemStatusChanged {
+    __kind: 'ItemStatusChanged'
+    collection: bigint
 }
 
 /**
- * New metadata has been set for an asset class.
+ * New metadata has been set for a `collection`.
  */
-export interface UniquesEvent_ClassMetadataSet {
-    __kind: 'ClassMetadataSet'
-    class: bigint
+export interface UniquesEvent_CollectionMetadataSet {
+    __kind: 'CollectionMetadataSet'
+    collection: bigint
     data: Uint8Array
     isFrozen: boolean
 }
 
 /**
- * Metadata has been cleared for an asset class.
+ * Metadata has been cleared for a `collection`.
  */
-export interface UniquesEvent_ClassMetadataCleared {
-    __kind: 'ClassMetadataCleared'
-    class: bigint
+export interface UniquesEvent_CollectionMetadataCleared {
+    __kind: 'CollectionMetadataCleared'
+    collection: bigint
 }
 
 /**
- * New metadata has been set for an asset instance.
+ * New metadata has been set for an item.
  */
 export interface UniquesEvent_MetadataSet {
     __kind: 'MetadataSet'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     data: Uint8Array
     isFrozen: boolean
 }
 
 /**
- * Metadata has been cleared for an asset instance.
+ * Metadata has been cleared for an item.
  */
 export interface UniquesEvent_MetadataCleared {
     __kind: 'MetadataCleared'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
 }
 
 /**
- * Metadata has been cleared for an asset instance.
+ * Metadata has been cleared for an item.
  */
 export interface UniquesEvent_Redeposited {
     __kind: 'Redeposited'
-    class: bigint
-    successfulInstances: bigint[]
+    collection: bigint
+    successfulItems: bigint[]
 }
 
 /**
- * New attribute metadata has been set for an asset class or instance.
+ * New attribute metadata has been set for a `collection` or `item`.
  */
 export interface UniquesEvent_AttributeSet {
     __kind: 'AttributeSet'
-    class: bigint
-    maybeInstance: (bigint | undefined)
+    collection: bigint
+    maybeItem: (bigint | undefined)
     key: Uint8Array
     value: Uint8Array
 }
 
 /**
- * Attribute metadata has been cleared for an asset class or instance.
+ * Attribute metadata has been cleared for a `collection` or `item`.
  */
 export interface UniquesEvent_AttributeCleared {
     __kind: 'AttributeCleared'
-    class: bigint
-    maybeInstance: (bigint | undefined)
+    collection: bigint
+    maybeItem: (bigint | undefined)
     key: Uint8Array
 }
 
 /**
+ * Ownership acceptance has changed for an account.
+ */
+export interface UniquesEvent_OwnershipAcceptanceChanged {
+    __kind: 'OwnershipAcceptanceChanged'
+    who: Uint8Array
+    maybeCollection: (bigint | undefined)
+}
+
+/**
+ * Max supply has been set for a collection.
+ */
+export interface UniquesEvent_CollectionMaxSupplySet {
+    __kind: 'CollectionMaxSupplySet'
+    collection: bigint
+    maxSupply: number
+}
+
+/**
+ * The price was set for the instance.
+ */
+export interface UniquesEvent_ItemPriceSet {
+    __kind: 'ItemPriceSet'
+    collection: bigint
+    item: bigint
+    price: bigint
+    whitelistedBuyer: (Uint8Array | undefined)
+}
+
+/**
+ * The price for the instance was removed.
+ */
+export interface UniquesEvent_ItemPriceRemoved {
+    __kind: 'ItemPriceRemoved'
+    collection: bigint
+    item: bigint
+}
+
+/**
+ * An item was bought.
+ */
+export interface UniquesEvent_ItemBought {
+    __kind: 'ItemBought'
+    collection: bigint
+    item: bigint
+    price: bigint
+    seller: Uint8Array
+    buyer: Uint8Array
+}
+
+/**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1489,7 +1668,7 @@ export interface IdentityEvent_SubIdentityRevoked {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1525,7 +1704,7 @@ export interface MultisigEvent_MultisigExecuted {
     timepoint: Timepoint
     multisig: Uint8Array
     callHash: Uint8Array
-    result: Type_30
+    result: Type_33
 }
 
 /**
@@ -1541,7 +1720,7 @@ export interface MultisigEvent_MultisigCancelled {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1559,7 +1738,7 @@ export interface ParachainSystemEvent_ValidationFunctionStored {
  */
 export interface ParachainSystemEvent_ValidationFunctionApplied {
     __kind: 'ValidationFunctionApplied'
-    value: number
+    relayChainBlockNum: number
 }
 
 /**
@@ -1574,30 +1753,29 @@ export interface ParachainSystemEvent_ValidationFunctionDiscarded {
  */
 export interface ParachainSystemEvent_UpgradeAuthorized {
     __kind: 'UpgradeAuthorized'
-    value: Uint8Array
+    codeHash: Uint8Array
 }
 
 /**
  * Some downward messages have been received and will be processed.
- * \[ count \]
  */
 export interface ParachainSystemEvent_DownwardMessagesReceived {
     __kind: 'DownwardMessagesReceived'
-    value: number
+    count: number
 }
 
 /**
  * Downward messages were processed using the given weight.
- * \[ weight_used, result_mqc_head \]
  */
 export interface ParachainSystemEvent_DownwardMessagesProcessed {
     __kind: 'DownwardMessagesProcessed'
-    value: [bigint, Uint8Array]
+    weightUsed: Weight
+    dmqHead: Uint8Array
 }
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1666,7 +1844,7 @@ export interface PolkadotXcmEvent_Notified {
  */
 export interface PolkadotXcmEvent_NotifyOverweight {
     __kind: 'NotifyOverweight'
-    value: [bigint, number, number, bigint, bigint]
+    value: [bigint, number, number, Weight, Weight]
 }
 
 /**
@@ -1785,7 +1963,7 @@ export interface PolkadotXcmEvent_NotifyTargetMigrationFail {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1820,7 +1998,7 @@ export interface CumulusXcmEvent_ExecutedDownward {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1831,7 +2009,8 @@ export type XcmpQueueEvent = XcmpQueueEvent_Success | XcmpQueueEvent_Fail | Xcmp
  */
 export interface XcmpQueueEvent_Success {
     __kind: 'Success'
-    value: (Uint8Array | undefined)
+    messageHash: (Uint8Array | undefined)
+    weight: Weight
 }
 
 /**
@@ -1839,7 +2018,9 @@ export interface XcmpQueueEvent_Success {
  */
 export interface XcmpQueueEvent_Fail {
     __kind: 'Fail'
-    value: [(Uint8Array | undefined), V2Error]
+    messageHash: (Uint8Array | undefined)
+    error: V2Error
+    weight: Weight
 }
 
 /**
@@ -1847,7 +2028,7 @@ export interface XcmpQueueEvent_Fail {
  */
 export interface XcmpQueueEvent_BadVersion {
     __kind: 'BadVersion'
-    value: (Uint8Array | undefined)
+    messageHash: (Uint8Array | undefined)
 }
 
 /**
@@ -1855,7 +2036,7 @@ export interface XcmpQueueEvent_BadVersion {
  */
 export interface XcmpQueueEvent_BadFormat {
     __kind: 'BadFormat'
-    value: (Uint8Array | undefined)
+    messageHash: (Uint8Array | undefined)
 }
 
 /**
@@ -1863,7 +2044,7 @@ export interface XcmpQueueEvent_BadFormat {
  */
 export interface XcmpQueueEvent_UpwardMessageSent {
     __kind: 'UpwardMessageSent'
-    value: (Uint8Array | undefined)
+    messageHash: (Uint8Array | undefined)
 }
 
 /**
@@ -1871,7 +2052,7 @@ export interface XcmpQueueEvent_UpwardMessageSent {
  */
 export interface XcmpQueueEvent_XcmpMessageSent {
     __kind: 'XcmpMessageSent'
-    value: (Uint8Array | undefined)
+    messageHash: (Uint8Array | undefined)
 }
 
 /**
@@ -1879,7 +2060,10 @@ export interface XcmpQueueEvent_XcmpMessageSent {
  */
 export interface XcmpQueueEvent_OverweightEnqueued {
     __kind: 'OverweightEnqueued'
-    value: [number, number, bigint, bigint]
+    sender: number
+    sentAt: number
+    index: bigint
+    required: Weight
 }
 
 /**
@@ -1887,12 +2071,13 @@ export interface XcmpQueueEvent_OverweightEnqueued {
  */
 export interface XcmpQueueEvent_OverweightServiced {
     __kind: 'OverweightServiced'
-    value: [bigint, bigint]
+    index: bigint
+    used: Weight
 }
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -1900,61 +2085,61 @@ export type DmpQueueEvent = DmpQueueEvent_InvalidFormat | DmpQueueEvent_Unsuppor
 
 /**
  * Downward message is invalid XCM.
- * \[ id \]
  */
 export interface DmpQueueEvent_InvalidFormat {
     __kind: 'InvalidFormat'
-    value: Uint8Array
+    messageId: Uint8Array
 }
 
 /**
  * Downward message is unsupported version of XCM.
- * \[ id \]
  */
 export interface DmpQueueEvent_UnsupportedVersion {
     __kind: 'UnsupportedVersion'
-    value: Uint8Array
+    messageId: Uint8Array
 }
 
 /**
  * Downward message executed with the given outcome.
- * \[ id, outcome \]
  */
 export interface DmpQueueEvent_ExecutedDownward {
     __kind: 'ExecutedDownward'
-    value: [Uint8Array, V2Outcome]
+    messageId: Uint8Array
+    outcome: V2Outcome
 }
 
 /**
  * The weight limit for handling downward messages was reached.
- * \[ id, remaining, required \]
  */
 export interface DmpQueueEvent_WeightExhausted {
     __kind: 'WeightExhausted'
-    value: [Uint8Array, bigint, bigint]
+    messageId: Uint8Array
+    remainingWeight: Weight
+    requiredWeight: Weight
 }
 
 /**
  * Downward message is overweight and was placed in the overweight queue.
- * \[ id, index, required \]
  */
 export interface DmpQueueEvent_OverweightEnqueued {
     __kind: 'OverweightEnqueued'
-    value: [Uint8Array, bigint, bigint]
+    messageId: Uint8Array
+    overweightIndex: bigint
+    requiredWeight: Weight
 }
 
 /**
  * Downward message from the overweight queue was executed.
- * \[ index, used \]
  */
 export interface DmpQueueEvent_OverweightServiced {
     __kind: 'OverweightServiced'
-    value: [bigint, bigint]
+    overweightIndex: bigint
+    weightUsed: Weight
 }
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2001,7 +2186,7 @@ export interface AssetRegistryEvent_LocationSet {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2087,7 +2272,7 @@ export interface XYKEvent_BuyExecuted {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2120,90 +2305,7 @@ export interface DusterEvent_Removed {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
-			by this pallet.
-			
- */
-export type ExchangeEvent = ExchangeEvent_IntentionRegistered | ExchangeEvent_IntentionResolvedAMMTrade | ExchangeEvent_IntentionResolvedDirectTrade | ExchangeEvent_IntentionResolvedDirectTradeFees | ExchangeEvent_InsufficientAssetBalanceEvent | ExchangeEvent_IntentionResolveErrorEvent
-
-/**
- * Intention registered event
- */
-export interface ExchangeEvent_IntentionRegistered {
-    __kind: 'IntentionRegistered'
-    who: Uint8Array
-    assetA: number
-    assetB: number
-    amount: bigint
-    intentionType: IntentionType
-    intentionId: Uint8Array
-}
-
-/**
- * Intention resolved as AMM Trade
- */
-export interface ExchangeEvent_IntentionResolvedAMMTrade {
-    __kind: 'IntentionResolvedAMMTrade'
-    who: Uint8Array
-    intentionType: IntentionType
-    intentionId: Uint8Array
-    amount: bigint
-    amountSoldOrBought: bigint
-    poolAccountId: Uint8Array
-}
-
-/**
- * Intention resolved as Direct Trade
- */
-export interface ExchangeEvent_IntentionResolvedDirectTrade {
-    __kind: 'IntentionResolvedDirectTrade'
-    accountIdA: Uint8Array
-    accountIdB: Uint8Array
-    intentionIdA: Uint8Array
-    intentionIdB: Uint8Array
-    amountA: bigint
-    amountB: bigint
-}
-
-/**
- * Paid fees event
- */
-export interface ExchangeEvent_IntentionResolvedDirectTradeFees {
-    __kind: 'IntentionResolvedDirectTradeFees'
-    who: Uint8Array
-    intentionId: Uint8Array
-    feeReceiver: Uint8Array
-    assetId: number
-    feeAmount: bigint
-}
-
-/**
- * Error event - insufficient balance of specified asset
- */
-export interface ExchangeEvent_InsufficientAssetBalanceEvent {
-    __kind: 'InsufficientAssetBalanceEvent'
-    who: Uint8Array
-    assetId: number
-    intentionType: IntentionType
-    intentionId: Uint8Array
-    errorDetail: DispatchError
-}
-
-/**
- * Intention Error Event
- */
-export interface ExchangeEvent_IntentionResolveErrorEvent {
-    __kind: 'IntentionResolveErrorEvent'
-    who: Uint8Array
-    assetIds: AssetPair
-    intentionType: IntentionType
-    intentionId: Uint8Array
-    errorDetail: DispatchError
-}
-
-/**
- * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2281,67 +2383,67 @@ export interface LBPEvent_BuyExecuted {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type NFTEvent = NFTEvent_ClassCreated | NFTEvent_InstanceMinted | NFTEvent_InstanceTransferred | NFTEvent_InstanceBurned | NFTEvent_ClassDestroyed
+export type NFTEvent = NFTEvent_CollectionCreated | NFTEvent_ItemMinted | NFTEvent_ItemTransferred | NFTEvent_ItemBurned | NFTEvent_CollectionDestroyed
 
 /**
- * A class was created
+ * A collection was created
  */
-export interface NFTEvent_ClassCreated {
-    __kind: 'ClassCreated'
+export interface NFTEvent_CollectionCreated {
+    __kind: 'CollectionCreated'
     owner: Uint8Array
-    classId: bigint
-    classType: ClassType
+    collectionId: bigint
+    collectionType: CollectionType
     metadata: Uint8Array
 }
 
 /**
- * An instance was minted
+ * An item was minted
  */
-export interface NFTEvent_InstanceMinted {
-    __kind: 'InstanceMinted'
+export interface NFTEvent_ItemMinted {
+    __kind: 'ItemMinted'
     owner: Uint8Array
-    classId: bigint
-    instanceId: bigint
+    collectionId: bigint
+    itemId: bigint
     metadata: Uint8Array
 }
 
 /**
- * An instance was transferred
+ * An item was transferred
  */
-export interface NFTEvent_InstanceTransferred {
-    __kind: 'InstanceTransferred'
+export interface NFTEvent_ItemTransferred {
+    __kind: 'ItemTransferred'
     from: Uint8Array
     to: Uint8Array
-    classId: bigint
-    instanceId: bigint
+    collectionId: bigint
+    itemId: bigint
 }
 
 /**
- * An instance was burned
+ * An item was burned
  */
-export interface NFTEvent_InstanceBurned {
-    __kind: 'InstanceBurned'
+export interface NFTEvent_ItemBurned {
+    __kind: 'ItemBurned'
     owner: Uint8Array
-    classId: bigint
-    instanceId: bigint
+    collectionId: bigint
+    itemId: bigint
 }
 
 /**
- * A class was destroyed
+ * A collection was destroyed
  */
-export interface NFTEvent_ClassDestroyed {
-    __kind: 'ClassDestroyed'
+export interface NFTEvent_CollectionDestroyed {
+    __kind: 'CollectionDestroyed'
     owner: Uint8Array
-    classId: bigint
+    collectionId: bigint
 }
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2390,7 +2492,7 @@ export interface MultiTransactionPaymentEvent_FeeWithdrawn {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2408,7 +2510,7 @@ export interface RelayChainInfoEvent_CurrentBlockNumbers {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2420,8 +2522,8 @@ export type MarketplaceEvent = MarketplaceEvent_TokenPriceUpdated | MarketplaceE
 export interface MarketplaceEvent_TokenPriceUpdated {
     __kind: 'TokenPriceUpdated'
     who: Uint8Array
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     price: (bigint | undefined)
 }
 
@@ -2432,8 +2534,8 @@ export interface MarketplaceEvent_TokenSold {
     __kind: 'TokenSold'
     owner: Uint8Array
     buyer: Uint8Array
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     price: bigint
 }
 
@@ -2443,8 +2545,8 @@ export interface MarketplaceEvent_TokenSold {
 export interface MarketplaceEvent_OfferPlaced {
     __kind: 'OfferPlaced'
     who: Uint8Array
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     amount: bigint
     expires: number
 }
@@ -2455,8 +2557,8 @@ export interface MarketplaceEvent_OfferPlaced {
 export interface MarketplaceEvent_OfferWithdrawn {
     __kind: 'OfferWithdrawn'
     who: Uint8Array
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
 }
 
 /**
@@ -2465,8 +2567,8 @@ export interface MarketplaceEvent_OfferWithdrawn {
 export interface MarketplaceEvent_OfferAccepted {
     __kind: 'OfferAccepted'
     who: Uint8Array
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     amount: bigint
     maker: Uint8Array
 }
@@ -2476,8 +2578,8 @@ export interface MarketplaceEvent_OfferAccepted {
  */
 export interface MarketplaceEvent_RoyaltyPaid {
     __kind: 'RoyaltyPaid'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     author: Uint8Array
     royalty: number
     royaltyAmount: bigint
@@ -2488,15 +2590,15 @@ export interface MarketplaceEvent_RoyaltyPaid {
  */
 export interface MarketplaceEvent_RoyaltyAdded {
     __kind: 'RoyaltyAdded'
-    class: bigint
-    instance: bigint
+    collection: bigint
+    item: bigint
     author: Uint8Array
     royalty: number
 }
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2522,7 +2624,228 @@ export interface TransactionPauseEvent_TransactionUnpaused {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
+			by this pallet.
+			
+ */
+export type RouterEvent = RouterEvent_RouteExecuted
+
+/**
+ * The route with trades has been successfully executed
+ */
+export interface RouterEvent_RouteExecuted {
+    __kind: 'RouteExecuted'
+    assetIn: number
+    assetOut: number
+    amountIn: bigint
+    amountOut: bigint
+}
+
+/**
+ * 
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
+			by this pallet.
+			
+ */
+export type XYKLiquidityMiningEvent = XYKLiquidityMiningEvent_GlobalFarmCreated | XYKLiquidityMiningEvent_GlobalFarmUpdated | XYKLiquidityMiningEvent_YieldFarmCreated | XYKLiquidityMiningEvent_GlobalFarmTerminated | XYKLiquidityMiningEvent_SharesDeposited | XYKLiquidityMiningEvent_SharesRedeposited | XYKLiquidityMiningEvent_RewardClaimed | XYKLiquidityMiningEvent_SharesWithdrawn | XYKLiquidityMiningEvent_YieldFarmStopped | XYKLiquidityMiningEvent_YieldFarmResumed | XYKLiquidityMiningEvent_YieldFarmTerminated | XYKLiquidityMiningEvent_YieldFarmUpdated | XYKLiquidityMiningEvent_DepositDestroyed
+
+/**
+ * New global farm was created.
+ */
+export interface XYKLiquidityMiningEvent_GlobalFarmCreated {
+    __kind: 'GlobalFarmCreated'
+    id: number
+    owner: Uint8Array
+    totalRewards: bigint
+    rewardCurrency: number
+    yieldPerPeriod: bigint
+    plannedYieldingPeriods: number
+    blocksPerPeriod: number
+    incentivizedAsset: number
+    maxRewardPerPeriod: bigint
+    minDeposit: bigint
+    priceAdjustment: bigint
+}
+
+/**
+ * Global farm's `price_adjustment` was updated.
+ */
+export interface XYKLiquidityMiningEvent_GlobalFarmUpdated {
+    __kind: 'GlobalFarmUpdated'
+    id: number
+    priceAdjustment: bigint
+}
+
+/**
+ * New yield farm was added into the farm.
+ */
+export interface XYKLiquidityMiningEvent_YieldFarmCreated {
+    __kind: 'YieldFarmCreated'
+    globalFarmId: number
+    yieldFarmId: number
+    multiplier: bigint
+    assetPair: AssetPair
+    loyaltyCurve: (LoyaltyCurve | undefined)
+}
+
+/**
+ * Global farm was terminated.
+ */
+export interface XYKLiquidityMiningEvent_GlobalFarmTerminated {
+    __kind: 'GlobalFarmTerminated'
+    globalFarmId: number
+    who: Uint8Array
+    rewardCurrency: number
+    undistributedRewards: bigint
+}
+
+/**
+ * New LP tokens was deposited.
+ */
+export interface XYKLiquidityMiningEvent_SharesDeposited {
+    __kind: 'SharesDeposited'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    amount: bigint
+    lpToken: number
+    depositId: bigint
+}
+
+/**
+ * LP token was redeposited for a new yield farm entry
+ */
+export interface XYKLiquidityMiningEvent_SharesRedeposited {
+    __kind: 'SharesRedeposited'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    amount: bigint
+    lpToken: number
+    depositId: bigint
+}
+
+/**
+ * Rewards was claimed.
+ */
+export interface XYKLiquidityMiningEvent_RewardClaimed {
+    __kind: 'RewardClaimed'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    claimed: bigint
+    rewardCurrency: number
+    depositId: bigint
+}
+
+/**
+ * LP tokens was withdrawn.
+ */
+export interface XYKLiquidityMiningEvent_SharesWithdrawn {
+    __kind: 'SharesWithdrawn'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    lpToken: number
+    amount: bigint
+    depositId: bigint
+}
+
+/**
+ * Yield farm for asset pair was stopped.
+ */
+export interface XYKLiquidityMiningEvent_YieldFarmStopped {
+    __kind: 'YieldFarmStopped'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    assetPair: AssetPair
+}
+
+/**
+ * Yield farm for asset pair was resumed.
+ */
+export interface XYKLiquidityMiningEvent_YieldFarmResumed {
+    __kind: 'YieldFarmResumed'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    assetPair: AssetPair
+    multiplier: bigint
+}
+
+/**
+ * Yield farm was terminated from global farm.
+ */
+export interface XYKLiquidityMiningEvent_YieldFarmTerminated {
+    __kind: 'YieldFarmTerminated'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    assetPair: AssetPair
+}
+
+/**
+ * Yield farm multiplier was updated.
+ */
+export interface XYKLiquidityMiningEvent_YieldFarmUpdated {
+    __kind: 'YieldFarmUpdated'
+    globalFarmId: number
+    yieldFarmId: number
+    who: Uint8Array
+    assetPair: AssetPair
+    multiplier: bigint
+}
+
+/**
+ * NFT representing deposit has been destroyed
+ */
+export interface XYKLiquidityMiningEvent_DepositDestroyed {
+    __kind: 'DepositDestroyed'
+    who: Uint8Array
+    depositId: bigint
+}
+
+/**
+ * 
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
+			by this pallet.
+			
+ */
+export type XYKWarehouseLMEvent = XYKWarehouseLMEvent_GlobalFarmAccRPZUpdated | XYKWarehouseLMEvent_YieldFarmAccRPVSUpdated | XYKWarehouseLMEvent_AllRewardsDistributed
+
+/**
+ * Global farm accumulated reward per share was updated.
+ */
+export interface XYKWarehouseLMEvent_GlobalFarmAccRPZUpdated {
+    __kind: 'GlobalFarmAccRPZUpdated'
+    globalFarmId: number
+    accumulatedRpz: bigint
+    totalSharesZ: bigint
+}
+
+/**
+ * Yield farm accumulated reward per valued share was updated.
+ */
+export interface XYKWarehouseLMEvent_YieldFarmAccRPVSUpdated {
+    __kind: 'YieldFarmAccRPVSUpdated'
+    globalFarmId: number
+    yieldFarmId: number
+    accumulatedRpvs: bigint
+    totalValuedShares: bigint
+}
+
+/**
+ * Global farm has no more rewards to distribute in the moment.
+ */
+export interface XYKWarehouseLMEvent_AllRewardsDistributed {
+    __kind: 'AllRewardsDistributed'
+    globalFarmId: number
+}
+
+/**
+ * 
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2571,11 +2894,11 @@ export interface CurrenciesEvent_Withdrawn {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
-export type TokensEvent = TokensEvent_Endowed | TokensEvent_DustLost | TokensEvent_Transfer | TokensEvent_Reserved | TokensEvent_Unreserved | TokensEvent_RepatriatedReserve | TokensEvent_BalanceSet
+export type TokensEvent = TokensEvent_Endowed | TokensEvent_DustLost | TokensEvent_Transfer | TokensEvent_Reserved | TokensEvent_Unreserved | TokensEvent_ReserveRepatriated | TokensEvent_BalanceSet | TokensEvent_TotalIssuanceSet | TokensEvent_Withdrawn | TokensEvent_Slashed | TokensEvent_Deposited | TokensEvent_LockSet | TokensEvent_LockRemoved
 
 /**
  * An account was created with some free balance.
@@ -2633,8 +2956,8 @@ export interface TokensEvent_Unreserved {
  * Some reserved balance was repatriated (moved from reserved to
  * another account).
  */
-export interface TokensEvent_RepatriatedReserve {
-    __kind: 'RepatriatedReserve'
+export interface TokensEvent_ReserveRepatriated {
+    __kind: 'ReserveRepatriated'
     currencyId: number
     from: Uint8Array
     to: Uint8Array
@@ -2654,8 +2977,69 @@ export interface TokensEvent_BalanceSet {
 }
 
 /**
+ * The total issuance of an currency has been set
+ */
+export interface TokensEvent_TotalIssuanceSet {
+    __kind: 'TotalIssuanceSet'
+    currencyId: number
+    amount: bigint
+}
+
+/**
+ * Some balances were withdrawn (e.g. pay for transaction fee)
+ */
+export interface TokensEvent_Withdrawn {
+    __kind: 'Withdrawn'
+    currencyId: number
+    who: Uint8Array
+    amount: bigint
+}
+
+/**
+ * Some balances were slashed (e.g. due to mis-behavior)
+ */
+export interface TokensEvent_Slashed {
+    __kind: 'Slashed'
+    currencyId: number
+    who: Uint8Array
+    freeAmount: bigint
+    reservedAmount: bigint
+}
+
+/**
+ * Deposited some balance into an account
+ */
+export interface TokensEvent_Deposited {
+    __kind: 'Deposited'
+    currencyId: number
+    who: Uint8Array
+    amount: bigint
+}
+
+/**
+ * Some funds are locked
+ */
+export interface TokensEvent_LockSet {
+    __kind: 'LockSet'
+    lockId: Uint8Array
+    currencyId: number
+    who: Uint8Array
+    amount: bigint
+}
+
+/**
+ * Some locked funds were unlocked
+ */
+export interface TokensEvent_LockRemoved {
+    __kind: 'LockRemoved'
+    lockId: Uint8Array
+    currencyId: number
+    who: Uint8Array
+}
+
+/**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2672,7 +3056,7 @@ export interface OrmlXcmEvent_Sent {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2691,7 +3075,7 @@ export interface XTokensEvent_TransferredMultiAssets {
 
 /**
  * 
-			The [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted
+			The [event](https://docs.substrate.io/main-docs/build/events-errors/) emitted
 			by this pallet.
 			
  */
@@ -2716,12 +3100,12 @@ export interface UnknownTokensEvent_Withdrawn {
 }
 
 export interface DispatchInfo {
-    weight: bigint
+    weight: Weight
     class: DispatchClass
     paysFee: Pays
 }
 
-export type DispatchError = DispatchError_Other | DispatchError_CannotLookup | DispatchError_BadOrigin | DispatchError_Module | DispatchError_ConsumerRemaining | DispatchError_NoProviders | DispatchError_TooManyConsumers | DispatchError_Token | DispatchError_Arithmetic
+export type DispatchError = DispatchError_Other | DispatchError_CannotLookup | DispatchError_BadOrigin | DispatchError_Module | DispatchError_ConsumerRemaining | DispatchError_NoProviders | DispatchError_TooManyConsumers | DispatchError_Token | DispatchError_Arithmetic | DispatchError_Transactional
 
 export interface DispatchError_Other {
     __kind: 'Other'
@@ -2762,6 +3146,11 @@ export interface DispatchError_Arithmetic {
     value: ArithmeticError
 }
 
+export interface DispatchError_Transactional {
+    __kind: 'Transactional'
+    value: TransactionalError
+}
+
 export type BalanceStatus = BalanceStatus_Free | BalanceStatus_Reserved
 
 export interface BalanceStatus_Free {
@@ -2772,13 +3161,13 @@ export interface BalanceStatus_Reserved {
     __kind: 'Reserved'
 }
 
-export type Type_30 = Type_30_Ok | Type_30_Err
+export type Type_33 = Type_33_Ok | Type_33_Err
 
-export interface Type_30_Ok {
+export interface Type_33_Ok {
     __kind: 'Ok'
 }
 
-export interface Type_30_Err {
+export interface Type_33_Err {
     __kind: 'Err'
     value: DispatchError
 }
@@ -2853,6 +3242,10 @@ export interface ProxyType_Transfer {
 export interface Timepoint {
     height: number
     index: number
+}
+
+export interface Weight {
+    refTime: bigint
 }
 
 export type V2Outcome = V2Outcome_Complete | V2Outcome_Incomplete | V2Outcome_Error
@@ -3213,21 +3606,6 @@ export interface AssetLocation {
     interior: V1Junctions
 }
 
-export type IntentionType = IntentionType_SELL | IntentionType_BUY
-
-export interface IntentionType_SELL {
-    __kind: 'SELL'
-}
-
-export interface IntentionType_BUY {
-    __kind: 'BUY'
-}
-
-export interface AssetPair {
-    assetIn: number
-    assetOut: number
-}
-
 export interface Pool {
     owner: Uint8Array
     start: (number | undefined)
@@ -3239,6 +3617,33 @@ export interface Pool {
     fee: [number, number]
     feeCollector: Uint8Array
     repayTarget: bigint
+}
+
+export type CollectionType = CollectionType_Marketplace | CollectionType_LiquidityMining | CollectionType_Redeemable | CollectionType_Auction | CollectionType_HydraHeads
+
+export interface CollectionType_Marketplace {
+    __kind: 'Marketplace'
+}
+
+export interface CollectionType_LiquidityMining {
+    __kind: 'LiquidityMining'
+}
+
+export interface CollectionType_Redeemable {
+    __kind: 'Redeemable'
+}
+
+export interface CollectionType_Auction {
+    __kind: 'Auction'
+}
+
+export interface CollectionType_HydraHeads {
+    __kind: 'HydraHeads'
+}
+
+export interface AssetPair {
+    assetIn: number
+    assetOut: number
 }
 
 export interface V1MultiAsset {
@@ -3272,7 +3677,7 @@ export interface Pays_No {
 
 export interface ModuleError {
     index: number
-    error: number
+    error: Uint8Array
 }
 
 export type TokenError = TokenError_NoFunds | TokenError_WouldDie | TokenError_BelowMinimum | TokenError_CannotCreate | TokenError_UnknownAsset | TokenError_Frozen | TokenError_Unsupported
@@ -3317,6 +3722,16 @@ export interface ArithmeticError_Overflow {
 
 export interface ArithmeticError_DivisionByZero {
     __kind: 'DivisionByZero'
+}
+
+export type TransactionalError = TransactionalError_LimitReached | TransactionalError_NoLayer
+
+export interface TransactionalError_LimitReached {
+    __kind: 'LimitReached'
+}
+
+export interface TransactionalError_NoLayer {
+    __kind: 'NoLayer'
 }
 
 export type V1Junctions = V1Junctions_Here | V1Junctions_X1 | V1Junctions_X2 | V1Junctions_X3 | V1Junctions_X4 | V1Junctions_X5 | V1Junctions_X6 | V1Junctions_X7 | V1Junctions_X8

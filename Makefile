@@ -43,7 +43,6 @@ restart:
 	rm -rf src/model/generated
 	rm -rf src/types/*
 	npx squid-typeorm-codegen
-	npx squid-substrate-typegen typegen-develop.json
 	npx squid-substrate-typegen typegen-production.json
 	npx squid-substrate-typegen typegen-rococo.json
 	-npx squid-substrate-typegen typegen-local.json

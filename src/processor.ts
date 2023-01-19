@@ -526,12 +526,12 @@ async function getAssetBalance(
   if (assetId === 0) {
     const storage = new SystemAccountStorage(ctx, block.header)
     // TODO: Extract production
-    return storage.getAsV16(acc).then((data) => data.data.free)
+    return storage.asV16.get(acc).then((data) => data.data.free)
   } else {
     const storage = new TokensAccountsStorage(ctx, block.header)
     // TODO: Extract production
     if (storage.isV16) {
-      return storage.getAsV16(acc, assetId).then((data) => data.free)
-    } else return storage.getAsV25(acc, assetId).then((data) => data.free)
+      return storage.asV16.get(acc, assetId).then((data) => data.free)
+    } else return storage.asV25.get(acc, assetId).then((data) => data.free)
   }
 }
