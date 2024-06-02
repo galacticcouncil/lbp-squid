@@ -1,4 +1,4 @@
 export enum PoolType {
-  XYK = "XYK",
-  LBP = "LBP",
+    XYK = "XYK",
+    LBP = "LBP",
 }
